@@ -1,0 +1,392 @@
+# 1642. Furthest Building You Can Reach
+
+## Problem Statement
+
+You are given:
+
+* An integer array `heights` representing building heights.
+* A number of `bricks`.
+* A number of `ladders`.
+
+You start from building `0` and move sequentially to the next building.
+
+### Rules
+
+While moving from building `i` to building `i + 1`:
+
+* If `heights[i] >= heights[i+1]`
+
+  * No resources are needed.
+* If `heights[i] < heights[i+1]`
+
+  * You must either:
+
+    * Use `bricks = heights[i+1] - heights[i]`
+    * OR use one ladder.
+
+Return the **furthest building index** you can reach using the resources optimally.
+
+---
+
+# Example 1
+
+### Input
+
+```java id="z3ujxa"
+heights = [4,2,7,6,9,14,12]
+bricks = 5
+ladders = 1
+```
+
+### Output
+
+```java id="y86np4"
+4
+```
+
+### Explanation
+
+* 4 → 2 : no resources
+* 2 → 7 : use 5 bricks
+* 7 → 6 : no resources
+* 6 → 9 : use ladder
+
+No more resources remain to continue further.
+
+---
+
+# Solution
+
+```java id="2i44sd"
+import java.util.PriorityQueue;
+
+class Solution {
+
+    public int furthestBuilding(int[] heights, int bricks, int ladders) {
+
+        PriorityQueue<Integer> minHeap = new PriorityQueue<>();
+
+        for (int i = 0; i < heights.length - 1; i++) {
+
+            int diff = heights[i + 1] - heights[i];
+
+            // No resources needed
+            if (diff <= 0) {
+                continue;
+            }
+
+            // Use ladder temporarily
+            minHeap.offer(diff);
+
+            // If ladders exceeded
+            if (minHeap.size() > ladders) {
+
+                // Smallest climb uses bricks
+                bricks -= minHeap.poll();
+            }
+
+            // Cannot move further
+            if (bricks < 0) {
+                return i;
+            }
+        }
+
+        return heights.length - 1;
+    }
+}
+```
+
+---
+
+# Intuition
+
+Ladders are more valuable than bricks because:
+
+* A ladder can cover **any height difference**
+* Bricks are limited by the climb size
+
+So we should:
+
+* Use ladders for the **largest climbs**
+* Use bricks for the **smaller climbs**
+
+To efficiently track climbs, we use a **Min Heap**.
+
+---
+
+# Approach
+
+## Step 1: Calculate Height Difference
+
+For every adjacent building:
+
+```java id="3n9z4z"
+diff = heights[i + 1] - heights[i]
+```
+
+If `diff <= 0`, no resources are needed.
+
+---
+
+## Step 2: Store Positive Climbs in Min Heap
+
+```java id="x8ojy8"
+minHeap.offer(diff);
+```
+
+We assume ladders are used for all climbs initially.
+
+---
+
+## Step 3: If Ladder Limit Exceeded
+
+```java id="9odqjo"
+if (minHeap.size() > ladders)
+```
+
+This means we have more climbs than ladders available.
+
+So:
+
+* Remove the smallest climb
+* Pay for it using bricks
+
+```java id="9ggv5q"
+bricks -= minHeap.poll();
+```
+
+---
+
+## Step 4: Check Brick Availability
+
+```java id="e0z4n0"
+if (bricks < 0)
+```
+
+If bricks become negative:
+
+* We cannot proceed further
+* Return current index
+
+---
+
+# Why Min Heap?
+
+A **Min Heap** helps us efficiently find the smallest climb.
+
+### Goal
+
+* Reserve ladders for the largest jumps
+* Use bricks for smaller jumps
+
+The smallest climb is always removed first:
+
+```java id="v14g0z"
+minHeap.poll()
+```
+
+This greedy strategy guarantees optimal resource usage.
+
+---
+
+# Topics Used
+
+## 1. Greedy Algorithm
+
+A greedy algorithm makes the locally optimal choice at each step.
+
+### Here:
+
+* Use ladders for large climbs
+* Use bricks for smaller climbs
+
+This maximizes distance traveled.
+
+---
+
+## 2. Priority Queue (Min Heap)
+
+### Definition
+
+A Priority Queue stores elements in sorted order.
+
+In Java:
+
+```java id="v6jlwm"
+PriorityQueue<Integer> minHeap = new PriorityQueue<>();
+```
+
+* Smallest element stays at the top
+* Insertion → `offer()`
+* Removal → `poll()`
+
+---
+
+## 3. Heap Operations
+
+### Insert into Heap
+
+```java id="u0gw79"
+minHeap.offer(diff);
+```
+
+### Remove Smallest Element
+
+```java id="v4k3pn"
+minHeap.poll();
+```
+
+---
+
+# Dry Run
+
+## Input
+
+```java id="kz13zc"
+heights = [4,2,7,6,9,14,12]
+bricks = 5
+ladders = 1
+```
+
+---
+
+## Iteration 1
+
+```text id="yd2h75"
+4 → 2
+diff = -2
+```
+
+No resources needed.
+
+---
+
+## Iteration 2
+
+```text id="ksg1df"
+2 → 7
+diff = 5
+```
+
+Heap:
+
+```text id="gk3jlh"
+[5]
+```
+
+Ladder used temporarily.
+
+---
+
+## Iteration 3
+
+```text id="ytvknm"
+7 → 6
+diff = -1
+```
+
+No resources needed.
+
+---
+
+## Iteration 4
+
+```text id="vvkrfy"
+6 → 9
+diff = 3
+```
+
+Heap:
+
+```text id="q4xhh9"
+[3,5]
+```
+
+Heap size exceeds ladders:
+
+* Remove smallest climb = 3
+* Use bricks
+
+```text id="1b7n1e"
+bricks = 5 - 3 = 2
+```
+
+Ladder reserved for climb 5.
+
+---
+
+## Iteration 5
+
+```text id="9yvgul"
+9 → 14
+diff = 5
+```
+
+Heap:
+
+```text id="w0f93q"
+[5,5]
+```
+
+Remove smallest:
+
+```text id="u8w8n9"
+bricks = 2 - 5 = -3
+```
+
+Bricks exhausted.
+
+Return:
+
+```text id="lp76kq"
+4
+```
+
+---
+
+# Complexity Analysis
+
+## Time Complexity
+
+Each climb is inserted and removed from heap at most once.
+
+Heap operations:
+
+```text id="n8rgp6"
+O(log k)
+```
+
+Where:
+
+* `k = ladders`
+
+Overall:
+
+```text id="eq1p6j"
+O(n log k)
+```
+
+---
+
+## Space Complexity
+
+Heap stores at most:
+
+```text id="jlwm5n"
+ladders + 1
+```
+
+So:
+
+```text id="1ag3zj"
+O(k)
+```
+
+---
+
+# Key Learning
+
+* Use **Greedy Strategy** when choosing optimal local decisions.
+* Use a **Min Heap** to efficiently track smallest climbs.
+* Reserve ladders for large jumps because ladders are more valuable than bricks.
+* Priority Queue is commonly used in optimization problems involving dynamic choices.
